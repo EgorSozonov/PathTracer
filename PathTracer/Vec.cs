@@ -15,19 +15,31 @@ namespace PathTracer {
         }
 
         public Vec plus(Vec r) {
-            return new Vec(this.x + r.x, this.y + r.y, this.z + r.z);
+            this.x += r.x;
+            this.y += r.y;
+            z += r.z;
+            return this;
         }
 
         public Vec minus(Vec r) {
-            return new Vec(this.x - r.x, this.y - r.y, this.z - r.z);
+            this.x -= r.x;
+            this.y -= r.y;
+            this.z -= r.z;
+            return this;
         }
 
         public Vec vecTimes(Vec r) {
-            return new Vec(this.x * r.x, this.y * r.y, this.z * r.z);
+            this.x *= r.x;
+            this.y *= r.y;
+            this.z *= r.z;
+            return this;
         }
 
         public Vec times(double f) {
-            return new Vec(this.x * f, this.y * f, this.z * f);
+            this.x *= f;
+            this.y *= f;
+            this.z *= f;
+            return this;
         }
 
         public double dot(Vec r) {
@@ -40,7 +52,11 @@ namespace PathTracer {
 
         public Vec normalize() {
             double len = Math.Sqrt(x * x + y * y + z * z);
-            return len > 0.0 ? new Vec(this.x / len, this.y / len, this.z / len) : this;
+            if (len == 0.0) return this;
+            x /= len;
+            y /= len;
+            z /= len;
+            return this;
         }
     }
 }
