@@ -15,31 +15,39 @@ namespace PathTracer {
         }
 
         public Vec plus(Vec r) {
-            this.x += r.x;
-            this.y += r.y;
+            return new Vec(x + r.x, y + r.y, z + r.z);
+        }
+
+        public void plusM(Vec r) {
+            x += r.x;
+            y += r.y;
             z += r.z;
-            return this;
         }
 
         public Vec minus(Vec r) {
+            return new Vec(x - r.x, y - r.y, z - r.z);
+        }
+
+        public void minusM(Vec r) {
             this.x -= r.x;
             this.y -= r.y;
             this.z -= r.z;
-            return this;
         }
 
-        public Vec vecTimes(Vec r) {
+        public void vecTimesM(Vec r) {
             this.x *= r.x;
             this.y *= r.y;
             this.z *= r.z;
-            return this;
         }
 
         public Vec times(double f) {
+            return new Vec(x * f, y * f, z * f);
+        }
+
+        public void timesM(double f) {
             this.x *= f;
             this.y *= f;
             this.z *= f;
-            return this;
         }
 
         public double dot(Vec r) {
