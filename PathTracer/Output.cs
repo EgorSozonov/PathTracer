@@ -11,7 +11,7 @@ namespace PathTracer {
             for (int i = 0; i < w; ++i) {
                 for (int j = 0; j < h; ++j) {
                     int indSource = 3 * (j * w + i);
-                    int indTarget = 3 * (j * w + w - i - 1);
+                    int indTarget = 3 * ((h - j - 1) * w + i);
                     img[indTarget    ] = data[indSource + 2];
                     img[indTarget + 1] = data[indSource + 1];
                     img[indTarget + 2] = data[indSource    ];
