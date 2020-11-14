@@ -24,6 +24,16 @@ namespace PathTracer {
             z += r.z;
         }
 
+        public Vec plusAll(double d) {
+            return new Vec(x + d, y + d, z + d);
+        }
+
+        public void plusAllM(double d) {
+            x += d;
+            y += d;
+            z += d;
+        }
+
         public Vec minus(Vec r) {
             return new Vec(x - r.x, y - r.y, z - r.z);
         }
@@ -61,10 +71,15 @@ namespace PathTracer {
         public Vec normalize() {
             double len = Math.Sqrt(x * x + y * y + z * z);
             if (len == 0.0) return this;
+            return new Vec(x / len, y / len, z / len);
+        }
+
+        public void normalizeM() {
+            double len = Math.Sqrt(x * x + y * y + z * z);
+            if (len == 0.0) return;
             x /= len;
             y /= len;
             z /= len;
-            return this;
         }
     }
 }

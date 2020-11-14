@@ -4,7 +4,7 @@ using System.Text;
 
 namespace PathTracer {
     public class PathTracer {
-        protected static Random rnd = new Random();
+        public static Random rnd = new Random();
         protected static Vec room0 = new Vec(-30, -0.5, -30);
         protected static Vec room1 = new Vec(30, 18, 30);
         protected static Vec room2 = new Vec(-25, 17, -25);
@@ -12,11 +12,11 @@ namespace PathTracer {
         protected static Vec plank0 = new Vec(1.5, 18.5, -25);
         protected static Vec plank1 = new Vec(6.5, 20, 25);
         protected static readonly Vec dX = new Vec(0.01, 0, 0);
-        protected static readonly Vec dY = new Vec(0.01, 0, 0);
-        protected static readonly Vec dZ = new Vec(0.01, 0, 0);
+        protected static readonly Vec dY = new Vec(0, 0.01, 0);
+        protected static readonly Vec dZ = new Vec(0, 0, 0.01);
         protected static readonly Vec lightDirection = (new Vec(0.6, 0.6, 1.0)).normalize();
-        protected static readonly Vec attenuationSun = new Vec(50, 80, 100);
-        protected static readonly Vec attenuationWall = new Vec(500, 400, 100);
+        protected static readonly Vec colorSun = new Vec(50, 80, 100);
+        protected static readonly Vec colorWall = new Vec(500, 400, 100);
 
         public static double min(double a, double b) { return a < b ? a : b; }
 
@@ -24,12 +24,12 @@ namespace PathTracer {
         /// space carved by lowerLeft vertex and opposite rectangle vertex upperRight.
         /// Negative return value if point is inside, positive if outside.
         public static double boxTest(Vec position, Vec lowerLeft, Vec upperRight) {
-            Vec toLowerLeft = position.minus(lowerLeft);
-            Vec fromUpperRight = upperRight.minus(position);
+            Vec fromLowerLeft = position.minus(lowerLeft);
+            Vec toUpperRight = upperRight.minus(position);
             return -min(
-                        min(min(toLowerLeft.x, fromUpperRight.x),
-                            min(toLowerLeft.y, fromUpperRight.y)),
-                        min(toLowerLeft.z, fromUpperRight.z));
+                        min(min(fromLowerLeft.x, toUpperRight.x),
+                            min(fromLowerLeft.y, toUpperRight.y)),
+                        min(fromLowerLeft.z, toUpperRight.z));
         }
 
         /// Cylinder CSG equation. Returns minimum signed distance from
@@ -53,24 +53,22 @@ namespace PathTracer {
         }
 
         public static double queryDatabase(Vec position, ref Hit hit) {
-            double distance = 1e9;
-            Vec f = position.times(1.0);
-            f.z = 0.0;
+            double distance = 1e9;            
+
             hit = Hit.Figure;
             Vec plankedPosition = new Vec(Math.Abs(position.x) % 8.0, position.y, position.z);
             double roomDist = min(
                 -min(boxTest(position, room0, room1),
                     boxTest(position, room2, room3)),
-                boxTest(plankedPosition,
-                  plank0, plank1));
+                boxTest(plankedPosition, plank0, plank1));
             if (roomDist < distance) {
                 distance = roomDist;
                 hit = Hit.Wall;
             }
             double sun = 19.9 - position.y;
             if (sun < distance) {
-                distance = sun;
                 hit = Hit.Sun;
+                return sun;
             }
             return distance;
         }
@@ -94,17 +92,20 @@ namespace PathTracer {
             return Hit.None;
         }
 
-        public static Vec trace(Vec origin, Vec direction) {
-            var sampledPosition = new Vec(0, 0, 0);
+        public static Vec trace(ref Vec origin, Vec direction) {
+            var hitPoint = new Vec(0, 0, 0);
+            var newDirection = direction;
             var normal = new Vec(0, 0, 0);
             var color = new Vec(0, 0, 0);
             double attenuation = 1.0;
             for (int bounceCount = 3; bounceCount > 0; --bounceCount) {
-                Hit hitType = rayMarching(origin, direction, ref sampledPosition, ref normal);
-                if (hitType == Hit.None) break;
+                Hit hitType = rayMarching(origin, direction, ref hitPoint, ref normal);
+                if (hitType == Hit.None) {
+                    break;
+                }
                 if (hitType == Hit.Figure) { // Specular bounce on a letter. No color acc.
-                    direction.minusM(normal.times(normal.dot(direction) * 2.0));
-                    origin = sampledPosition.plus(direction.times(0.1));
+                    newDirection.minusM(normal.times(normal.dot(direction) * 2.0));
+                    origin = hitPoint.plus(newDirection.times(0.1));
                     attenuation *= 0.2;
                 } else if (hitType == Hit.Wall) {
                     double incidence = normal.dot(lightDirection);
@@ -119,34 +120,26 @@ namespace PathTracer {
                     Vec b = new Vec(1 + g * normal.x * normal.x * u, g * v, -g * normal.x);
                     b.timesM(s * Math.Sin(p));
 
-                    direction = a;
-                    direction.plusM(b);
-                    direction.plusM(normal.times(Math.Sqrt(c)));
-                    origin = sampledPosition.plus(direction.times(0.1));
+                    newDirection = a;
+                    newDirection.plusM(b);
+                    newDirection.plusM(normal.times(Math.Sqrt(c)));
+                    origin = hitPoint.plus(newDirection.times(0.1));
                     attenuation *= 0.2;
-                    if (incidence > 0
-                        && rayMarching(sampledPosition.plus(normal.times(0.1)), lightDirection, ref sampledPosition, ref normal) == Hit.Sun) {
-                        color.plusM(attenuationWall.times(attenuation * incidence));
+                    var ptAbove = hitPoint.plus(normal.times(0.1));
+                    if (incidence > 0) {
+                        var tmp = rayMarching(ptAbove, lightDirection, ref hitPoint, ref normal);
+                        if (tmp == Hit.Sun) {
+                            color.plusM(colorWall.times(attenuation * incidence));
+                        }
                     }
-
                 } else if (hitType == Hit.Sun) {
-                    color.plusM(attenuationSun.times(attenuation));
+                    color.plusM(colorSun.times(attenuation));
+                    break;
                 }
             }
+            
             return color;
         }
     }
     public enum Hit { Wall, Sun, Figure, None, }
 }
-/*
-
-float CylTest(Vec position, Vec lowerLeft, Vec upperRight) {
-  lowerLeft = position + lowerLeft * -1;
-  upperRight = upperRight + position * -1;
-  return -min(
-          min(
-                  min(lowerLeft.x, upperRight.x),
-                  min(lowerLeft.y, upperRight.y)),
-          min(lowerLeft.z, upperRight.z));
-}
-*/
