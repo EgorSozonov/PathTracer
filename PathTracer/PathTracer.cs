@@ -53,8 +53,11 @@ namespace PathTracer {
         }
 
         public static double queryDatabase(Vec position, ref Hit hit) {
-            double distance = 1e9;            
-
+            double distance = 1e9;
+            distance = min(distance,
+                boxTest(position, new Vec(0, 5, 0), new Vec(5, 10, 5))
+                );
+            distance = Math.Max(distance, position.x) - 0.5;
             hit = Hit.Figure;
             Vec plankedPosition = new Vec(Math.Abs(position.x) % 8.0, position.y, position.z);
             double roomDist = min(
@@ -92,20 +95,22 @@ namespace PathTracer {
             return Hit.None;
         }
 
-        public static Vec trace(ref Vec origin, Vec direction) {
+        public static Vec trace(Vec origin, Vec direction) {
             var hitPoint = new Vec(0, 0, 0);
-            var newDirection = direction;
             var normal = new Vec(0, 0, 0);
-            var color = new Vec(0, 0, 0);
+            var result = new Vec(0, 0, 0);
             double attenuation = 1.0;
+            var newDirection = new Vec(direction.x, direction.y, direction.z);
+            var newOrigin = new Vec(origin.x, origin.y, origin.z);
             for (int bounceCount = 3; bounceCount > 0; --bounceCount) {
-                Hit hitType = rayMarching(origin, direction, ref hitPoint, ref normal);
+                Hit hitType = rayMarching(newOrigin, newDirection, ref hitPoint, ref normal);
                 if (hitType == Hit.None) {
                     break;
                 }
                 if (hitType == Hit.Figure) { // Specular bounce on a letter. No color acc.
-                    newDirection.minusM(normal.times(normal.dot(direction) * 2.0));
-                    origin = hitPoint.plus(newDirection.times(0.1));
+
+                    newDirection.minusM(normal.times(normal.dot(newDirection) * 2.0));
+                    newOrigin = hitPoint.plus(newDirection.times(0.1));
                     attenuation *= 0.2;
                 } else if (hitType == Hit.Wall) {
                     double incidence = normal.dot(lightDirection);
@@ -123,23 +128,67 @@ namespace PathTracer {
                     newDirection = a;
                     newDirection.plusM(b);
                     newDirection.plusM(normal.times(Math.Sqrt(c)));
-                    origin = hitPoint.plus(newDirection.times(0.1));
+                    newOrigin = hitPoint.plus(newDirection.times(0.1));
                     attenuation *= 0.2;
                     var ptAbove = hitPoint.plus(normal.times(0.1));
                     if (incidence > 0) {
                         var tmp = rayMarching(ptAbove, lightDirection, ref hitPoint, ref normal);
                         if (tmp == Hit.Sun) {
-                            color.plusM(colorWall.times(attenuation * incidence));
+                            result.plusM(colorWall.times(attenuation * incidence));
                         }
                     }
                 } else if (hitType == Hit.Sun) {
-                    color.plusM(colorSun.times(attenuation));
+                    result.plusM(colorSun.times(attenuation));
                     break;
                 }
+            }            
+            return result;
+        }
+
+        public void run(Vec position, Vec dirObserver, Vec dirLeft, int samplesCount, int w, int h) {
+            // Cross-product to get the up vector
+            Vec dirUp = new Vec(dirObserver.y * dirLeft.z - dirObserver.z * dirLeft.y,
+                                dirObserver.z * dirLeft.x - dirObserver.x * dirLeft.z,
+                                dirObserver.x * dirLeft.y - dirObserver.y * dirLeft.x);
+            dirUp.normalizeM();
+            dirUp.timesM(1.0 / h);
+            byte[] pixels = new byte[3 * w * h];
+
+            for (int y = h; y > 0; --y) {
+                for (int x = w; x > 0; --x) {
+                    Vec color = new Vec(0, 0, 0);
+                    for (int p = samplesCount; p > 0; --p) {
+                        var randomLeft = dirLeft.times(x - w / 2 + rnd.NextDouble());
+                        var randomUp = dirUp.times((y - h / 2 + rnd.NextDouble()));
+                        var randomizedDir = new Vec(dirObserver.x, dirObserver.y, dirObserver.z);
+                        randomizedDir.plusM(randomLeft);
+                        randomizedDir.plusM(randomUp);
+                        randomizedDir.normalizeM();
+                        //Hit hType = Hit.None;
+                        var incr = trace(position, randomizedDir);
+                        if (y < h/2) {
+                            ;
+                        }
+                        color.plusM(incr);
+                    }
+
+                    // Reinhard tone mapping
+                    color.timesM(241.0 / samplesCount);
+                    color = new Vec((color.x + 14.0) / (color.x + 255.0),
+                                    (color.y + 14.0) / (color.y + 255.0),
+                                    (color.z + 14.0) / (color.z + 255.0));
+                    color.timesM(255.0);
+                    int index = 3 * (w * y - w + x - 1);
+                    pixels[index    ] = (byte)color.x;
+                    pixels[index + 1] = (byte)color.y;
+                    pixels[index + 2] = (byte)color.z;
+                }
             }
-            
-            return color;
+            Output.createBMP(pixels, w, h, "card.bmp");
+            Console.WriteLine("Finished");
+            Console.ReadKey();
         }
     }
+
     public enum Hit { Wall, Sun, Figure, None, }
 }

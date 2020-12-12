@@ -81,5 +81,9 @@ namespace PathTracer {
             y /= len;
             z /= len;
         }
+
+        public override string ToString() {
+            return $"{x} {y} {z}";
+        }
     }
 }
