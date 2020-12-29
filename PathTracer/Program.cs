@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace PathTracer {
     class Program {
+        public static Stopwatch sw = new Stopwatch();
         static void Main(string[] args) {
             //byte[] testData = new byte[] { 0, 255, 0, 0, 255, 0, 0, 255, 0, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127,
             // 255, 0, 0, 255, 0, 0, 255, 0, 0, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127,
@@ -17,13 +19,17 @@ namespace PathTracer {
             //return;
 
             //  int w = 960, h = 540, samplesCount = 16;
-            int w = 240, h = 135, samplesCount = 16;
+            int w = 640, h = 270, samplesCount = 8;
             Vec position = new Vec(-22, 5, 25);
-            Vec dirObserver = (new Vec(-3, 4, 0)).minus(position).normalize();
-            Vec dirLeft = (new Vec(dirObserver.z, 0, -dirObserver.x)).normalize().times(1.0 / w);
+            Vec dirObserver = (new Vec(-10, 4, 0)).minus(position).normalize();
+            
 
+            sw.Start();
             var pathTracer = new PathTracer();
-            pathTracer.run(position, dirObserver, dirLeft, samplesCount, w, h);
+            pathTracer.run(position, dirObserver, samplesCount, w, h);
+            sw.Stop();
+            Console.WriteLine($"Finished in {sw.ElapsedMilliseconds} ms");
+            Console.ReadKey();
         }
     }
 }

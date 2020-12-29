@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.28307.1231
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PathTracer", "PathTracer\PathTracer.csproj", "{447497FD-E996-4186-87E3-E62D7D75F756}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PathTracerTest", "PathTracerTest\PathTracerTest.csproj", "{2B6A59E6-9501-4C0C-98D6-C536CF2F5312}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{447497FD-E996-4186-87E3-E62D7D75F756}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{447497FD-E996-4186-87E3-E62D7D75F756}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{447497FD-E996-4186-87E3-E62D7D75F756}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2B6A59E6-9501-4C0C-98D6-C536CF2F5312}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B6A59E6-9501-4C0C-98D6-C536CF2F5312}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B6A59E6-9501-4C0C-98D6-C536CF2F5312}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2B6A59E6-9501-4C0C-98D6-C536CF2F5312}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

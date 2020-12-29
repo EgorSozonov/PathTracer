@@ -6,24 +6,29 @@ namespace PathTracer {
     public class PathTracer {
         public static Random rnd = new Random();
         protected static Vec room0 = new Vec(-30, -0.5, -30);
-        protected static Vec room1 = new Vec(30, 18, 30);
-        protected static Vec room2 = new Vec(-25, 17, -25);
-        protected static Vec room3 = new Vec(25, 20, 25);
+        protected static Vec room1 = new Vec(30, 15, 30);
+        protected static Vec room2 = new Vec(-20, 14, -20);
+        protected static Vec room3 = new Vec(20, 20, 20);
         protected static Vec plank0 = new Vec(1.5, 18.5, -25);
         protected static Vec plank1 = new Vec(6.5, 20, 25);
         protected static readonly Vec dX = new Vec(0.01, 0, 0);
         protected static readonly Vec dY = new Vec(0, 0.01, 0);
         protected static readonly Vec dZ = new Vec(0, 0, 0.01);
-        protected static readonly Vec lightDirection = (new Vec(0.6, 0.6, 1.0)).normalize();
+        protected static readonly Vec lightDirection = (new Vec(0.3, 0.6, 0.4)).normalize();
         protected static readonly Vec colorSun = new Vec(50, 80, 100);
         protected static readonly Vec colorWall = new Vec(500, 400, 100);
 
         public static double min(double a, double b) { return a < b ? a : b; }
 
+        public static double carveOut(double a, double b) {
+            if (b < 0) return -b;
+            return Math.Min(a, b);
+        }
+
         /// Rectangle CSG equation. Returns minimum signed distance from
         /// space carved by lowerLeft vertex and opposite rectangle vertex upperRight.
         /// Negative return value if point is inside, positive if outside.
-        public static double boxTest(Vec position, Vec lowerLeft, Vec upperRight) {
+        public static double probeBox(Vec position, Vec lowerLeft, Vec upperRight) {
             Vec fromLowerLeft = position.minus(lowerLeft);
             Vec toUpperRight = upperRight.minus(position);
             return -min(
@@ -35,11 +40,14 @@ namespace PathTracer {
         /// Cylinder CSG equation. Returns minimum signed distance from
         /// a cylinder oriented along the z axis.
         /// 'proximalCenter' = coordinates of the center of the closest cylinder base.
-        double cylinderTest(Vec position, Vec proximalCenter, double radius, double height) {
-            double distAxial = min(position.z - proximalCenter.z, proximalCenter.z + height - position.z);
-            double distRadial = radius 
-                                - Math.Sqrt(Math.Pow(position.x - proximalCenter.x, 2) + Math.Pow(position.y - proximalCenter.y, 2));
-            return -min(distAxial, distRadial);
+        public static double probeCylinder(Vec position, Vec proximalCenter, double radius, double height) {
+            double distAxial = -min(position.z - proximalCenter.z, proximalCenter.z + height - position.z);
+            double diffX = position.x - proximalCenter.x;
+            double diffY = position.y - proximalCenter.y;
+            double distRadial = -radius 
+                                + Math.Sqrt(diffX*diffX + diffY*diffY);
+            if (distAxial > 0 && distRadial > 0) return Math.Min(distAxial, distRadial);
+            return Math.Max(distRadial, distAxial);
         }
 
         /// Cylinder CSG equation. Returns minimum signed distance from
@@ -49,21 +57,26 @@ namespace PathTracer {
             double distAxial = min(position.z - proximalCenter.z, proximalCenter.z + height - position.z);
             double distRadial = radius
                                 - Math.Sqrt(Math.Pow(position.x - proximalCenter.x, 2) + Math.Pow(position.y - proximalCenter.y, 2));
-            return -min(distAxial, distRadial);
+            return Math.Max(distRadial, distAxial);
         }
 
         public static double queryDatabase(Vec position, ref Hit hit) {
             double distance = 1e9;
-            distance = min(distance,
-                boxTest(position, new Vec(0, 5, 0), new Vec(5, 10, 5))
-                );
+            //distance = min(distance,
+            //    boxTest(position, new Vec(-10, 5, -4), new Vec(-8, 10, 6))
+            //    );
+            //var inner = probeCylinder(position, new Vec(-18, 6, 12), 1, 3);
+            var outer = probeCylinder(position, new Vec(-10, 6, 12), 3, 3);
+
+            //distance = min(distance, carveOut(outer, inner));
+            distance = min(distance, outer);
             distance = Math.Max(distance, position.x) - 0.5;
             hit = Hit.Figure;
             Vec plankedPosition = new Vec(Math.Abs(position.x) % 8.0, position.y, position.z);
             double roomDist = min(
-                -min(boxTest(position, room0, room1),
-                    boxTest(position, room2, room3)),
-                boxTest(plankedPosition, plank0, plank1));
+                -min(probeBox(position, room0, room1),
+                    probeBox(position, room2, room3)),
+                probeBox(plankedPosition, plank0, plank1));
             if (roomDist < distance) {
                 distance = roomDist;
                 hit = Hit.Wall;
@@ -145,8 +158,12 @@ namespace PathTracer {
             return result;
         }
 
-        public void run(Vec position, Vec dirObserver, Vec dirLeft, int samplesCount, int w, int h) {
+        public void run(Vec position, Vec dirObserver, int samplesCount, int w, int h) {
+            Vec dirLeft = (new Vec(dirObserver.z, 0, -dirObserver.x)).normalize();
+            //dirLeft.timesM(1.0 / w);
+            dirLeft.timesM(1.0 / h);
             // Cross-product to get the up vector
+
             Vec dirUp = new Vec(dirObserver.y * dirLeft.z - dirObserver.z * dirLeft.y,
                                 dirObserver.z * dirLeft.x - dirObserver.x * dirLeft.z,
                                 dirObserver.x * dirLeft.y - dirObserver.y * dirLeft.x);
@@ -185,8 +202,6 @@ namespace PathTracer {
                 }
             }
             Output.createBMP(pixels, w, h, "card.bmp");
-            Console.WriteLine("Finished");
-            Console.ReadKey();
         }
     }
 
