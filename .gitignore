@@ -2,6 +2,9 @@
 PathTracer/bin/*
 PathTracer/obj/*
 PathTracer/Properties/*
+PathTracerTest/bin/*
+PathTracerTest/obj/*
+PathTracerTest/Properties/*
 TestResults/*
 packages/*
 .git/*
