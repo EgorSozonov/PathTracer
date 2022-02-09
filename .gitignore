@@ -8,3 +8,5 @@ PathTracerTest/Properties/*
 TestResults/*
 packages/*
 .git/*
+.DS_STORE
+target/*
