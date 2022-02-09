@@ -171,7 +171,7 @@ namespace PathTracer {
             dirUp.timesM(1.0 / h);
             byte[] pixels = new byte[3 * w * h];
 
-            for (int y = h; y > 0; --y) {
+            Parallel.For (1, h - 1, (y) => {
                 for (int x = w; x > 0; --x) {
                     Vec color = new Vec(0, 0, 0);
                     for (int p = samplesCount; p > 0; --p) {
@@ -200,7 +200,7 @@ namespace PathTracer {
                     pixels[index + 1] = (byte)color.y;
                     pixels[index + 2] = (byte)color.z;
                 }
-            }
+            });
             Output.createBMP(pixels, w, h, "card.bmp");
         }
     }
