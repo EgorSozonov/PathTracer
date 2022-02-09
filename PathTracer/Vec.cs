@@ -38,6 +38,13 @@ namespace PathTracer {
             return new Vec(x - r.x, y - r.y, z - r.z);
         }
 
+        public void minus(Vec r, ref Vec outp) {
+            outp.x = x - r.x;
+            outp.y = y - r.y;
+            outp.z = z - r.z;            
+        }
+
+
         public void minusM(Vec r) {
             this.x -= r.x;
             this.y -= r.y;

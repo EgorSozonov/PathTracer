@@ -18,17 +18,18 @@ namespace PathTracer {
             //Output.createBMP(testData, 16, 9, "test.bmp");
             //return;
 
-            //  int w = 960, h = 540, samplesCount = 16;
-            int w = 640, h = 270, samplesCount = 8;
+            //  int w = 960, h = 540, samplesCount = 2048; time  = 180
+            // C# is 24 times slower than c++!
+            int w = 320, h = 180, samplesCount = 64; 
             Vec position = new Vec(-22, 5, 25);
             Vec dirObserver = (new Vec(-10, 4, 0)).minus(position).normalize();
             
-
             sw.Start();
+            Console.WriteLine($"Started path tracing at {DateTime.Now.ToString("HH:mm:ss")} with sampleCount {samplesCount}");
             var pathTracer = new PathTracer();
             pathTracer.run(position, dirObserver, samplesCount, w, h);
             sw.Stop();
-            Console.WriteLine($"Finished in {sw.ElapsedMilliseconds} ms");
+            Console.WriteLine($"Finished in {sw.ElapsedMilliseconds/1000.0} s");
             Console.ReadKey();
         }
     }

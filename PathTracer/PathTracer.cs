@@ -31,6 +31,7 @@ namespace PathTracer {
         public static double probeBox(Vec position, Vec lowerLeft, Vec upperRight) {
             Vec fromLowerLeft = position.minus(lowerLeft);
             Vec toUpperRight = upperRight.minus(position);
+
             return -min(
                         min(min(fromLowerLeft.x, toUpperRight.x),
                             min(fromLowerLeft.y, toUpperRight.y)),
@@ -66,10 +67,11 @@ namespace PathTracer {
             //    boxTest(position, new Vec(-10, 5, -4), new Vec(-8, 10, 6))
             //    );
             //var inner = probeCylinder(position, new Vec(-18, 6, 12), 1, 3);
-            var outer = probeCylinder(position, new Vec(-10, 6, 12), 3, 3);
+            //var outer = probeCylinder(position, new Vec(-10, 6, 12), 3, 3);
+            //distance = min(distance, outer);
 
             //distance = min(distance, carveOut(outer, inner));
-            distance = min(distance, outer);
+            
             distance = Math.Max(distance, position.x) - 0.5;
             hit = Hit.Figure;
             Vec plankedPosition = new Vec(Math.Abs(position.x) % 8.0, position.y, position.z);
@@ -121,7 +123,6 @@ namespace PathTracer {
                     break;
                 }
                 if (hitType == Hit.Figure) { // Specular bounce on a letter. No color acc.
-
                     newDirection.minusM(normal.times(normal.dot(newDirection) * 2.0));
                     newOrigin = hitPoint.plus(newDirection.times(0.1));
                     attenuation *= 0.2;
